@@ -1,9 +1,11 @@
 package com.cloudStorage.client;
 
 import com.cloudStorage.client.communication.MyClientServer;
+import com.cloudStorage.client.controllers.CreatAlert;
 import com.cloudStorage.client.controllers.WorkWithTables;
 import com.cloudStorage.client.workingWithMessage.GetMessage;
 import com.cloudStorage.client.workingWithMessage.SendMessage;
+import com.cloudStorage.common.data.FileForTable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -25,7 +27,7 @@ public class Controller implements Initializable {
     //client
     public ProgressBar pb_client;
     public TableView<FileForTable> table_client;
-    public TableColumn<FileForTable,String> table_clientName;
+    public TableColumn<FileForTable, String> table_clientName;
     public TableColumn<FileForTable,String> table_clientSize;
     public TableColumn<FileForTable,String> table_clientDate;
 //    public ObservableList<FileForTable> fileDataClient = FXCollections.observableArrayList();
@@ -57,8 +59,7 @@ public class Controller implements Initializable {
         try{
             this.messageService = App.getMessageService();
             this.sendMessage = new SendMessage(this.messageService.getNetwork());
-            App.getMessageService().getGetMessage().setController(this);
-            //this.sendMessage = App.getSendMessage();
+            App.getMessageService().getNetwork().getGetMessage().setController(this);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -94,22 +95,20 @@ public class Controller implements Initializable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            selectedFile=null;
         }
     }
 
     @FXML
     public void button_delete(ActionEvent actionEvent) {
         File file;
-
         FileForTable selectedFile = table_client.getSelectionModel().getSelectedItem();
         System.out.println(selectedFile);
         if(selectedFile !=null) {
             file = new File("cloud-client/storage/" + selectedFile.nameFileTable);
             file.delete();
-            selectedFile = null;
         }
         workWithTables.updateTableClient();
+        CreatAlert.setAlert(Alert.AlertType.INFORMATION,"File on client", "File was deleted");
     }
 
     @FXML
@@ -122,17 +121,13 @@ public class Controller implements Initializable {
         FileForTable selectedFile = table_service.getSelectionModel().getSelectedItem();
         System.out.println(selectedFile);
         if(selectedFile !=null) {
-
             sendMessage.getFileFromService(selectedFile.nameFileTable);
-            selectedFile = null;
         }
     }
 
 
 
     public void button_delService(ActionEvent actionEvent) {
-        File file;
-
         FileForTable fileForTable = table_service.getSelectionModel().getSelectedItem();
         System.out.println("Server del file "+ fileForTable);
         if(fileForTable != null){

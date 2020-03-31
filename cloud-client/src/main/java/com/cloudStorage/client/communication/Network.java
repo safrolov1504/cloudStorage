@@ -1,6 +1,7 @@
 package com.cloudStorage.client.communication;
 
 import com.cloudStorage.client.Controller;
+import com.cloudStorage.client.workingWithMessage.GetMessage;
 import com.cloudStorage.common.data.CreatCommand;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -9,7 +10,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
+
 import java.util.Scanner;
 
 public class Network {
@@ -20,19 +21,17 @@ public class Network {
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
     private Scanner scannerIn;
-    private Controller controller;
+    private GetMessage getMessage;
 
-    public DataOutputStream getOutputStream() {
-        return outputStream;
-    }
-    public DataInputStream getInputStream() {
-        return inputStream;
+    public GetMessage getGetMessage() {
+        return getMessage;
     }
 
     public Network(String serverAddress, int port, MyClientServer myClientServer) {
         this.serverAddress = serverAddress;
         this.port = port;
         this.myClientServer = myClientServer;
+        this.getMessage = new GetMessage();
 
         try {
             //it's first connection or not
@@ -59,25 +58,12 @@ public class Network {
     }
 
     public void getMessage(){
-
         new Thread(() ->{
             while (true){
                 //waiting for message
                 try {
                     byte inByte = inputStream.readByte();
-                    if(inByte == CreatCommand.getSendListFileFromService() || inByte == CreatCommand.getGetFileOk()
-                            || inByte == CreatCommand.getGetFileNOk()){
-                        byte command = inByte;
-                        if(inByte == CreatCommand.getGetFileNOk()){
-                            //error
-                        } else {
-                            getSthFromService(command);
-                        }
-                    } else {
-                        //System.out.println(inByte);
-                        byte finalInByte = inByte;
-                        Platform.runLater(() -> myClientServer.processRetrievedMessage(finalInByte));
-                    }
+                    sortInnerMessage(inByte);
                 } catch (IOException e){
                     System.exit(0);
                 }
@@ -85,43 +71,42 @@ public class Network {
         }).start();
     }
 
-    public void getSthFromService(byte command) throws IOException {
-        byte inByte;
-        System.out.println("Get sth from server");
-        ArrayList<Byte> bytes = new ArrayList<>();
-        int time=0;
-
-        //waiting for size of string (name or list from service)
-        int length = inputStream.readInt();
-//        byte [] byteLength = new byte[4];
-//        while (time !=4){
-//            inByte = inputStream.readByte();
-//            byteLength[time] = inByte;
-//            time++;
-//        }
-        time = length;
-//        time = ByteBuffer.wrap(byteLength).getInt();
-        //bytes.remove(0);
-        //System.out.println(Arrays.toString(bytes.toArray())+" "+time);
-
-        while (time > 0){
-            inByte = inputStream.readByte();
-            bytes.add(inByte);
-            //System.out.println("here "+ inByte);
-            time--;
-        }
-
-        if(command == CreatCommand.getSendListFileFromService()){
-            //case when we're waiting for list of Files on the service
-            System.out.println("start to get file list from the server");
-            myClientServer.getListFile(bytes);
-        } else if(command == CreatCommand.getGetFileOk()){
-            //case when we're waiting for file from service
-            System.out.println("start to get file from the server");
-            myClientServer.getFileFromService(bytes,inputStream);
+    public void sortInnerMessage(byte innerByte) throws IOException {
+        if (innerByte == CreatCommand.getCommandAuthOk() || innerByte == CreatCommand.getCommandAuthNok()) {
+            //info from server about auth
+            System.out.println("Client: Get info from server. Result of authentication");
+            Platform.runLater(() -> getMessage.infoAuthIn(innerByte));
+        } else if (innerByte == CreatCommand.getSendFileOk() || innerByte == CreatCommand.getSendFileNOk()) {
+            //info about sending file to the server
+            System.out.println("Client: Get info from server. Result of sending file to the server");
+            Platform.runLater(() -> getMessage.infoSendFileToServer(innerByte));
+        } else if (innerByte == CreatCommand.getDelFileFromServerOk() || innerByte == CreatCommand.getDelFileFromServerNOk()) {
+            //info about deleting file on the server
+            System.out.println("Client: get info from server about deleting file on the server");
+            Platform.runLater(() -> getMessage.infoDelFileOnServer(innerByte));
+        } else if (innerByte == CreatCommand.getSendListFileFromService()) {
+            //get list of file from server
+            System.out.println("Client: get info from server. List of files on the server is getting");
+            byte[] listFile = getStringFromServer();
+            getMessage.getListFile(listFile);
+        } else if (innerByte == CreatCommand.getGetFileOk() || innerByte == CreatCommand.getGetFileNOk()) {
+            //get file from server
+            System.out.println("Client: get info from server. File from the server is getting");
+            byte[] nameFile = getStringFromServer();
+            getMessage.getFileFromService(nameFile, inputStream);
+        } else {
+            System.out.println("Unexpected value: " + innerByte);
         }
     }
 
+    public byte[] getStringFromServer() throws IOException {
+        byte [] byteIn;
+        //waiting for size of string (name or list from service)
+        int length = inputStream.readInt();
+        byteIn = new byte[length];
+        inputStream.read(byteIn);
+        return byteIn;
+    }
 
     public void sendInt(int intIn) {
         try {
@@ -151,5 +136,4 @@ public class Network {
             e.printStackTrace();
         }
     }
-
 }

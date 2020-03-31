@@ -1,6 +1,7 @@
 package com.cloudStorage.service.workingWithMessage;
 
-import com.cloudStorage.service.connection.FileForTable;
+
+import com.cloudStorage.common.data.FileForTable;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class ListFilesServer {
 
         System.arraycopy(string.getBytes(),0,byteOut,byteLength.length,string.getBytes().length);
 //        System.out.println(length+" "+string);
-//        System.out.println(Arrays.toString(byteOut));
+        System.out.println(Arrays.toString(byteOut));
         //System.out.println(Arrays.toString(byteLength)+" " +ByteBuffer.wrap(byteLength).getInt());
         return byteOut;
         //return sb.toString().getBytes();

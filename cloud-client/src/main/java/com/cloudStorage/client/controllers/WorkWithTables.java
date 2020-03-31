@@ -2,8 +2,8 @@ package com.cloudStorage.client.controllers;
 
 
 import com.cloudStorage.client.Controller;
-import com.cloudStorage.client.FileForTable;
 import com.cloudStorage.client.workingWithMessage.SendMessage;
+import com.cloudStorage.common.data.FileForTable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.cell.PropertyValueFactory;

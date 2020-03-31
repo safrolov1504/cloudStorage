@@ -36,7 +36,6 @@ public class SendMessage {
         network.sendInt(file.getName().length());
         network.sendMessage(file.getName().getBytes());
 
-
         network.sendLong(lengthFile);
 
         //start working with file

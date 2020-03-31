@@ -6,6 +6,10 @@ public class CreatCommand {
     private static byte commandAuthNok = -125;
 
     private static byte sendListFileFromServer = -124;
+    private static byte sendListFileFromServerOk = sendListFileFromServer;
+
+
+
     private static byte sendListFileFromServiceEnd = -123;
 
     private static byte delFileFromServer = -122;
@@ -92,9 +96,9 @@ public class CreatCommand {
         return sendListFileFromServer;
     }
 
-    public static byte getSendListFileFromServiceEnd() {
-        return sendListFileFromServiceEnd;
-    }
+//    public static byte getSendListFileFromServiceEnd() {
+//        return sendListFileFromServiceEnd;
+//    }
 
     public static byte getDelFileFromServer() {
         return delFileFromServer;
@@ -106,5 +110,13 @@ public class CreatCommand {
 
     public static byte getDelFileFromServerNOk() {
         return delFileFromServerNOk;
+    }
+
+    public static byte getSendListFileFromServer() {
+        return sendListFileFromServer;
+    }
+
+    public static byte getSendListFileFromServerOk() {
+        return sendListFileFromServerOk;
     }
 }

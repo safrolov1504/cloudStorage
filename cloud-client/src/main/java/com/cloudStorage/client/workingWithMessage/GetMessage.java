@@ -1,12 +1,16 @@
 package com.cloudStorage.client.workingWithMessage;
 
+import com.cloudStorage.client.App;
 import com.cloudStorage.client.Controller;
-import com.cloudStorage.client.FileForTable;
-import com.cloudStorage.client.workingWithMessage.message.SingIn;
-import com.cloudStorage.client.workingWithMessage.message.WorkFile;
+import com.cloudStorage.client.controllers.ChangeStage;
+import com.cloudStorage.client.controllers.CreatAlert;
 import com.cloudStorage.common.data.CreatCommand;
+import com.cloudStorage.common.data.FileForTable;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
+import javafx.stage.Stage;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -17,26 +21,24 @@ public class GetMessage {
 
     private Controller controller;
     public ObservableList<FileForTable> fileDataService = FXCollections.observableArrayList();
-    private WorkFile workFile;
-
+    //private WorkFile workFile;
+    private Alert alert;
 
     public GetMessage() {
-        this.workFile = new WorkFile();
+        //this.workFile = new WorkFile();
     }
 
     public void setController(Controller controller) {
         this.controller = controller;
-        workFile.setController(controller);
+        //workFile.setController(controller);
     }
 
     public void getListFile(byte[] bytesIn){
-        //System.out.println(Arrays.toString(bytesIn));
         String str = new String(bytesIn);
-        //System.out.println(str);
 
         fileDataService.clear();
 
-        String [] subString = str.split("<END>");
+        String [] subString = str.split(FileForTable.getEnd());
         for (String strFile:subString) {
             fileDataService.add(new FileForTable(strFile));
         }
@@ -44,20 +46,7 @@ public class GetMessage {
         controller.getWorkWithTables().addInfoTableService(fileDataService);
     }
 
-    public void workingWithInnerMessage(byte innerByte) {
-        if(innerByte == CreatCommand.getCommandAuthNok() || innerByte == CreatCommand.getCommandAuthOk()){
-            (new SingIn(controller,innerByte)).checkUser();
-        }
-
-        if(innerByte == CreatCommand.getSendFileOk() || innerByte == CreatCommand.getSendFileNOk()){
-            workFile.getFileReady(innerByte);
-        }
-
-        if(innerByte == CreatCommand.getDelFileFromServerOk() || innerByte == CreatCommand.getDelFileFromServerNOk()){
-            workFile.delFileReady(innerByte);
-        }
-    }
-
+    //get file from server
     public void getFileFromService(byte[] nameFileByte, DataInputStream inputStream) throws IOException {
         //get name of file
         String nameFile = new String(nameFileByte);
@@ -69,9 +58,6 @@ public class GetMessage {
 
         File file = new File("cloud-client/storage/"+nameFile);
 
-        if(file.exists()){
-
-        } else {
             //creat file
             file.createNewFile();
             FileOutputStream fileOutputStream = new FileOutputStream(file);
@@ -89,12 +75,48 @@ public class GetMessage {
                     }
                     i = 0;
                 }
-
             }
             System.out.println("End to get file from service "+ nameFile +" size: "+lengthFile);
             controller.getWorkWithTables().updateTableClient();
-        }
-
-
+            Platform.runLater(() ->CreatAlert.setAlert(Alert.AlertType.INFORMATION,
+                    "File", "File was got"));
     }
+
+    //get information from server about authentication
+    public void infoAuthIn(byte innerByte) {
+        String userName = controller.textField_login.getText();
+        if(innerByte == CreatCommand.getCommandAuthOk()){
+            App.setFlag(true);
+            System.out.println("Client: Checking " + userName + " is ok");
+            ChangeStage.changeStageDo((Stage) controller.testField_pass.getScene().getWindow(),
+                    "/com.cloud.client/workInterface.fxml","Working window "+ controller.textField_login.getText());
+        } else if(innerByte == CreatCommand.getCommandAuthNok()){
+
+            System.out.println("Client: Checking " + userName + " is not ok");
+            CreatAlert.setAlert(Alert.AlertType.WARNING,"Authentication is failed","Wrong user or password");
+        }
+    }
+
+    //get information about sending file to the server
+    public void infoSendFileToServer(byte innerByte){
+        if(innerByte == CreatCommand.getSendFileOk()){
+            CreatAlert.setAlert(Alert.AlertType.INFORMATION, "File", "File was send");
+            controller.getWorkWithTables().updateTableService();
+        }   else {
+            CreatAlert.setAlert(Alert.AlertType.WARNING, "File", "File was not send");
+        }
+    }
+
+    //get information about deleting file from the server
+    public void infoDelFileOnServer(byte innerByte){
+        //workFile.delFileReady(innerByte);
+        if(innerByte == CreatCommand.getDelFileFromServerOk()){
+            CreatAlert.setAlert(Alert.AlertType.INFORMATION, "File", "File was deleted");
+            controller.getWorkWithTables().updateTableService();
+        }   else {
+            CreatAlert.setAlert(Alert.AlertType.WARNING, "File", "File was not deleted");
+        }
+    }
+
+
 }
