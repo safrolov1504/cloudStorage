@@ -36,9 +36,11 @@ public class FileHandler extends ChannelInboundHandlerAdapter {
     private byte[] cash;
     private int i;
     private int lengthCash;
+    private ListFilesServer listFilesServer;
 
     public FileHandler(String userName) {
         this.userName = userName;
+        listFilesServer = new ListFilesServer();
     }
 
     @Override
@@ -142,7 +144,7 @@ public class FileHandler extends ChannelInboundHandlerAdapter {
                         state = State.IDLE;
                         fileOutputStream.close();
                         System.out.println("File was gotten from " + userName+", name file "+ fileName +", size file "+ fileLength);
-                        sendBack(ctx, CreatCommand.getSendFileOk());
+                        SendBack.sendBack(ctx, CreatCommand.getSendFileOk());
                         break;
                     }
                 }
@@ -154,8 +156,10 @@ public class FileHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void sendList(ChannelHandlerContext ctx){
-        sendBack(ctx,CreatCommand.getSendListFileFromService());
-        sendBackBytes(ctx, ListFilesServer.creatFileList(userName));
+        SendBack.sendBack(ctx,CreatCommand.getSendListFileFromService());
+        //SendBack.sendBack(ctx, ListFilesServer.creatFileList(userName));
+        listFilesServer.creatFileList(ctx,userName);
+        //ListFilesServer.creatFileList(ctx,userName);
         System.out.println("list of file was send to "+userName);
         //sendBack(ctx,CreatCommand.getSendListFileFromServiceEnd());
     }
@@ -166,18 +170,5 @@ public class FileHandler extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-    public void sendBackBytes(ChannelHandlerContext ctx, byte [] arr){
-        ByteBuf buf = ctx.alloc().buffer(arr.length);
 
-        buf.writeBytes(arr);
-
-        ctx.writeAndFlush(buf);
-    }
-
-    public void sendBack(ChannelHandlerContext ctx, byte arr){
-        ByteBuf buf = ctx.alloc().buffer(1);
-        buf.writeByte(arr);
-
-        ctx.writeAndFlush(buf);
-    }
 }

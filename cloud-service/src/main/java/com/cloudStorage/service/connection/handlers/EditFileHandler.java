@@ -46,7 +46,7 @@ public class EditFileHandler extends ChannelInboundHandlerAdapter {
         if(stateSecond == StateSecond.SEND_FILE_TO_CLIENT) {
             //if file is not exist, then send error command
             if (!file.exists()) {
-                sendBack(ctx, CreatCommand.getGetFileNOk());
+                SendBack.sendBack(ctx, CreatCommand.getGetFileNOk());
                 return;
             }
             fileInputStream = new FileInputStream(file.getPath());
@@ -54,13 +54,13 @@ public class EditFileHandler extends ChannelInboundHandlerAdapter {
             long lengthFile = file.length();
 
             //send command CreatCommand.getGetFile()
-            sendBack(ctx, CreatCommand.getGetFileOk());
+            SendBack.sendBack(ctx, CreatCommand.getGetFileOk());
             //send length of name
-            sendBackBytes(ctx, SendFileToClient.getLengthName(nameFile));
+            SendBack.sendBack(ctx, SendFileToClient.getLengthName(nameFile));
             //send name
-            sendBackBytes(ctx, SendFileToClient.getByteName(nameFile));
+            SendBack.sendBack(ctx, SendFileToClient.getByteName(nameFile));
             //send length of file
-            sendBackBytes(ctx,SendFileToClient.longToBytes(lengthFile));
+            SendBack.sendBack(ctx,SendFileToClient.longToBytes(lengthFile));
             //send file
             SendFileToClient.sendFile(ctx, lengthFile, fileInputStream);
             System.out.println("file "+ nameFile + " was send");
@@ -69,12 +69,12 @@ public class EditFileHandler extends ChannelInboundHandlerAdapter {
         //if it needs to del file from server
         if(stateSecond == StateSecond.DEL_FILE_FROM_SERVER){
             if (!file.exists()) {
-                sendBack(ctx, CreatCommand.getDelFileFromServerNOk());
+                SendBack.sendBack(ctx, CreatCommand.getDelFileFromServerNOk());
                 return;
             }
             fileInputStream = new FileInputStream(file.getPath());
             file.delete();
-            sendBack(ctx, CreatCommand.getDelFileFromServerOk());
+            SendBack.sendBack(ctx, CreatCommand.getDelFileFromServerOk());
             System.out.println("file "+ nameFile + " was send");
         }
     }
@@ -83,18 +83,5 @@ public class EditFileHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
         ctx.close();
-    }
-
-    public void sendBack(ChannelHandlerContext ctx, byte out){
-        ByteBuf buf = ctx.alloc().buffer(2);
-        buf.writeByte(out);
-        ctx.writeAndFlush(buf);
-    }
-
-    public void sendBackBytes(ChannelHandlerContext ctx, byte [] arr){
-        ByteBuf buf = ctx.alloc().buffer(arr.length);
-        //System.out.println(Arrays.toString(arr));
-        buf.writeBytes(arr);
-        ctx.writeAndFlush(buf);
     }
 }
